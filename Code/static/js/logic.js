@@ -1,5 +1,7 @@
 // @TODO
 // legend (citibike example)
+// flask
+// cut down chloropleth
 
 // Create the tile layer that will be the background of our map
 var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
@@ -25,6 +27,7 @@ var layers = {
   HIGH_SCHOOL_AP: new L.LayerGroup(),
   COLLEGE: new L.LayerGroup(),
   SUBWAY_STATION: new L.LayerGroup(),
+  AIRPORT: new L.LayerGroup(),
   SCHOOL_DISTRICT: new L.LayerGroup(),
   ES_ZONE: new L.LayerGroup(),
   MS_ZONE: new L.LayerGroup(),
@@ -46,7 +49,7 @@ var layers = {
 // Create the map with our layers
 var map = L.map("map-id", {
   center: [40.73, -74.0059],
-  zoom: 12,
+  zoom: 14,
   layers: [streetmap, layers.HIGH_SCHOOL_AP, layers.SCHOOL_DISTRICT]
 });
 
@@ -69,7 +72,8 @@ var groupedOverlays = {
     "High Schools": layers.HS_ZONE
   },
   "Transportation": {
-    "Subway Stations": layers.SUBWAY_STATION
+    "Subway Stations": layers.SUBWAY_STATION,
+    "Airports": layers.AIRPORT
   },
   "Geography": {
     "School Districts": layers.SCHOOL_DISTRICT,
@@ -121,6 +125,12 @@ var icons = {
     iconColor: "white",
     markerColor: "orange",
     shape: "circle"
+  }),
+  AIRPORT: L.ExtraMarkers.icon({
+    icon: "ion-paper-airplane",
+    iconColor: "white",
+    markerColor: "blue",
+    shape: "star"
   })
 };
 
@@ -269,6 +279,7 @@ d3.json("https://data.ny.gov/resource/hvwh-qtfg.json", function(response) {
 
   // Loop through the stations array
   for (var index = 0; index < response.length; index++) {
+
     var station = response[index];
 
     // For each station, create a marker and bind a popup with the station's name
@@ -284,6 +295,33 @@ d3.json("https://data.ny.gov/resource/hvwh-qtfg.json", function(response) {
     msMarker.addTo(layers["SUBWAY_STATION"]);
   }
 });
+
+// Airports
+d3.json("https://data.cityofnewyork.us/api/views/3q66-h7aj/rows.geojson?", function(response) {
+  // Loop through the stations array
+
+  for (var index = 0; index < response.features.length; index++) {
+
+  
+
+    var airport = response.features[index];
+
+    // For each station, create a marker and bind a popup with the station's name
+    try {
+      var airMarker = L.marker([airport.geometry.coordinates[1], airport.geometry.coordinates[0]],  {icon: icons["AIRPORT"]})
+        .bindPopup("<h3>" + airport.properties.name + "<h3>");
+    }
+    catch(err) {
+      console.log("Airport Error: " + airport.properties.name)
+    }
+    
+    // Add the new marker to the appropriate layer
+    airMarker.addTo(layers["AIRPORT"]);
+  }
+});
+
+
+
 
 // School Districts
 var disctrictGradRate = {
@@ -341,7 +379,7 @@ d3.json(link, function(data) {
           var district = info[index];
           layer.bindPopup("<h2>School District: " + feature.properties.schoolDistrict + "</h2>"
             + "<hr><h3>Average Graduation Rate: " + disctrictGradRate[feature.properties.schoolDistrict] 
-            + "<br>Attendance: " + district.ytd_attendance_avg_ + "%<br>"
+            + "<br>Average Attendance: " + district.ytd_attendance_avg_ + "%<br>"
             + "Enrollment: " + district.ytd_enrollment_avg_ + "</h3>");
         }
       });
@@ -571,7 +609,7 @@ d3.json(link, function(data) {
         }
       });
       // Giving each feature a pop-up with information pertinent to it
-      layer.bindPopup("<h2>Borough: " + feature.properties.borough + "</h2>"
+      layer.bindPopup("<h2>" + feature.properties.borough + "</h2>"
         + "<hr><h3>Average Graduation Rate: " + boroughGradRate[feature.properties.borough] + "</h3>");
 
     }
@@ -687,12 +725,13 @@ var APILink = "http://data.beta.nyc//dataset/d6ffa9a4-c598-4b18-8caf-14abde6a575
 
 var geojson;
 var jsonData;
+var NYCCounties = ["Queens County", "New York County", "Richmond County", "Bronx County", "Kings County"];
 
 // Grab data with d3
 d3.json(APILink, function(data) {
 
   jsonData = data;
-  console.log(L.choropleth);
+  console.log(L);
   // Create a new choropleth layer
   geojson = L.choropleth(data, {
 
@@ -718,8 +757,11 @@ d3.json(APILink, function(data) {
     onEachFeature: function(feature, layer) {
       layer.bindPopup(feature.properties.LOCALNAME + ", " + feature.properties.State + "<br>Yearly Housing:<br>" +
         "$" + feature.properties.HOUSINGCOS);
-    }
-    
+    },
+
+  
+    filter: function(feature) {if (NYCCounties.indexOf(feature.properties.COUNTY) >=0) {return true;} else {return false;}}
+
   });
 
   // Set up the legend
@@ -822,7 +864,9 @@ d3.json(APILink, function(data) {
           "$" + feature.properties.HOUSINGCOS);
       },
   
-      filter: function(feature) {if (feature.properties.HOUSINGCOS > filterLevel) {return false;} else {return true;}}
+      filter: function(feature) {if (feature.properties.HOUSINGCOS > filterLevel) {return false;} else {return true;}},
+
+      filter: function(feature) {if (NYCCounties.indexOf(feature.properties.COUNTY) >=0) {return true;} else {return false;}}
   
     });
     geojson.addTo(layers["COST_LIVING"]);
