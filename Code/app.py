@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 
 from flask import Flask, jsonify, render_template
+
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -17,37 +18,46 @@ app = Flask(__name__)
 #################################################
 # Database Setup
 #################################################
-
-#app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/bellybutton.sqlite"
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:raynor1128@localhost/move_nyc'
 #db = SQLAlchemy(app)
 
 # reflect an existing database into a new model
-#Base = automap_base()
+Base = automap_base()
+
+engine = create_engine("mysql://root:raynor1128@localhost/move_nyc")
+
 # reflect the tables
-#Base.prepare(db.engine, reflect=True)
+Base.prepare(engine, reflect=True)
 
 # Save references to each table
-#Samples_Metadata = Base.classes.sample_metadata
-#Samples = Base.classes.samples
 
+High_Schools = Base.classes.high_schools
+#app.config['MYSQL_DATABASE_DB'] = 'high_schools'
+
+session = Session(engine)
 
 @app.route("/")
 def index():
     """Return the homepage."""
     return render_template("index.html")
 
-"""
-@app.route("/names")
-def names():
-    #Return a list of sample names.
 
+@app.route("/highschool")
+def highschool():
+    results = session.query(High_Schools.school_name).all()
+    
+    #results = db.session.query("select * from high_schools")
     # Use Pandas to perform the sql query
-    stmt = db.session.query(Samples).statement
-    df = pd.read_sql_query(stmt, db.session.bind)
-
+    #stmt = db.session.query(HighSchools).statement
+    #df = pd.read_sql_query(stmt, db.session.bind)
+    
+    all_names = list(np.ravel(results))
+    
     # Return a list of the column names (sample names)
-    return jsonify(list(df.columns)[2:])
-
+    #return jsonify(list(df.columns)[2:])
+    
+    return jsonify(all_names)
+"""
 
 @app.route("/metadata/<sample>")
 def sample_metadata(sample):
