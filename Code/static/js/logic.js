@@ -1,5 +1,7 @@
 // @TODO
 // legend (citibike example)
+// flask
+// cut down chloropleth
 
 // Create the tile layer that will be the background of our map
 var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
@@ -25,7 +27,9 @@ var layers = {
   HIGH_SCHOOL_AP: new L.LayerGroup(),
   COLLEGE: new L.LayerGroup(),
   SUBWAY_STATION: new L.LayerGroup(),
+  AIRPORT: new L.LayerGroup(),
   SCHOOL_DISTRICT: new L.LayerGroup(),
+  SCHOOL_DISTRICT_CHLORO: new L.LayerGroup(),
   ES_ZONE: new L.LayerGroup(),
   MS_ZONE: new L.LayerGroup(),
   HS_ZONE: new L.LayerGroup(),
@@ -46,7 +50,7 @@ var layers = {
 // Create the map with our layers
 var map = L.map("map-id", {
   center: [40.73, -74.0059],
-  zoom: 12,
+  zoom: 14,
   layers: [streetmap, layers.HIGH_SCHOOL_AP, layers.SCHOOL_DISTRICT]
 });
 
@@ -63,16 +67,13 @@ var groupedOverlays = {
     "High Schools, AP Programs": layers.HIGH_SCHOOL_AP,
     "Colleges": layers.COLLEGE
   },
-  "School Zones": {
-    "Elementary Schools": layers.ES_ZONE,
-    "Middle Schools": layers.MS_ZONE,
-    "High Schools": layers.HS_ZONE
-  },
   "Transportation": {
-    "Subway Stations": layers.SUBWAY_STATION
+    "Subway Stations": layers.SUBWAY_STATION,
+    "Airports": layers.AIRPORT
   },
   "Geography": {
     "School Districts": layers.SCHOOL_DISTRICT,
+    "School Districts by College Rate": layers.SCHOOL_DISTRICT_CHLORO,
     "Boroughs": layers.BOROUGH,
     "Neighborhoods": layers.NEIGHBORHOOD,
     "Census Tracts": layers.CENSUS_TRACT,
@@ -82,9 +83,9 @@ var groupedOverlays = {
 
 var options = {
   // Make the "Landmarks" group exclusive (use radio inputs)
-  exclusiveGroups: ["Geography"],
+  exclusiveGroups: [],
   // Show a checkbox next to non-exclusive group labels for toggling all
-  groupCheckboxes: true
+  groupCheckboxes: false
 };
 
 // Create a control for our layers, add our overlay layers to it
@@ -121,6 +122,12 @@ var icons = {
     iconColor: "white",
     markerColor: "orange",
     shape: "circle"
+  }),
+  AIRPORT: L.ExtraMarkers.icon({
+    icon: "ion-paper-airplane",
+    iconColor: "white",
+    markerColor: "blue",
+    shape: "star"
   })
 };
 
@@ -134,8 +141,9 @@ d3.json("https://data.cityofnewyork.us/resource/m6d4-riyp.json", function(respon
     // For each, create a marker and bind a popup with the name
     try {
       var msMarker = L.marker([middleSchool.latitude, middleSchool.longitude],  {icon: icons["MIDDLE_SCHOOL"]})
-        .bindPopup("<h3>" + middleSchool.printedschoolname + "<h3>"
-          + `<br>Website: <a href="https://${middleSchool.independentwebsite}">https://${middleSchool.independentwebsite}</a>`);
+        .bindPopup("<h2>" + middleSchool.printedschoolname + "</h2>"
+          + "<hr>" + middleSchool.overview
+          + `<hr><h3>Website: <a href="https://${middleSchool.independentwebsite}">https://${middleSchool.independentwebsite}</a></h3>`);
     }
     catch(err) {
       //console.log("Middle School: " + middleSchool.name_prog1)
@@ -168,8 +176,11 @@ d3.json("https://data.cityofnewyork.us/resource/h7rb-945c.json", function(respon
 });
 
 // High schools with AP
-var nyc_grad_rate = 0.74; //https://www.schools.nyc.gov/docs/default-source/default-document-library/2019nychsdirectorycitywideenglish
+
+//https://www.schools.nyc.gov/docs/default-source/default-document-library/2019nychsdirectorycitywideenglish
+var nyc_grad_rate = 0.74;
 var nyc_college_rate = 0.57;
+
 d3.json("https://data.cityofnewyork.us/resource/h7rb-945c.json", function(response) {
 
   // Loop through the array
@@ -208,11 +219,12 @@ d3.json("https://data.cityofnewyork.us/resource/h7rb-945c.json", function(respon
             + "</h2><hr><h3>AP Courses:</h3>" + highSchool.advancedplacement_courses
 
             //+ `<h3><br><div id="content">${highSchool.advancedplacement_courses}</div>`
-
-
+            
             + "<br><h3>Grad Rate: " + Math.round(highSchool.graduation_rate*100) + "% " + grad_rate_dif_str
             + "<br>College Rate: " + Math.round(highSchool.college_career_rate*100) + "% " + col_rate_dif_str
-            + `<br>Website: <a href="https://${highSchool.website}">https://${highSchool.website}</a></h3>`
+            + `<br>Website: <a href="http://${highSchool.website}">http://${highSchool.website}</a>`
+            + `<br>Email: <a href = "mailto:${highSchool.school_email}">${highSchool.school_email}</a>`
+            + "<br>Phone: " + highSchool.phone_number + "</h3>"
             + "<hr>" + highSchool.overview_paragraph);
       }
       else {
@@ -220,7 +232,9 @@ d3.json("https://data.cityofnewyork.us/resource/h7rb-945c.json", function(respon
           .bindPopup("<h2>" + highSchool.school_name 
             + "</h2><hr><h3>Grad Rate: " + Math.round(highSchool.graduation_rate*100) + "% " + grad_rate_dif_str
             + "<br>College Rate: " + Math.round(highSchool.college_career_rate*100) + "% " + col_rate_dif_str
-            + `<br>Website: <a href="https://${highSchool.website}">https://${highSchool.website}</a></h3>`
+            + `<br>Website: <a href="http://${highSchool.website}">http://${highSchool.website}</a>`
+            + `<br>Email: <a href = "mailto:${highSchool.school_email}">${highSchool.school_email}</a>`
+            + "<br>Phone: " + highSchool.phone_number + "</h3>"
             + "<hr>" + highSchool.overview_paragraph);
       }
     }
@@ -253,7 +267,7 @@ d3.json("https://data.cityofnewyork.us/resource/8pnn-kkif.json", function(respon
     try {
       var colMarker = L.marker([college.the_geom.coordinates[1],college.the_geom.coordinates[0]],  {icon: icons["COLLEGE"]})
         .bindPopup("<h3>" + college.name + "<h3>"
-          + `<br>Website: <a href="https://${college.url}">https://${college.url}</a>`);
+          + `<br>Website: <a href="${college.url}">${college.url}</a>`);
     }
     catch(err) {
       //console.log("College: " + college.name)
@@ -269,6 +283,7 @@ d3.json("https://data.ny.gov/resource/hvwh-qtfg.json", function(response) {
 
   // Loop through the stations array
   for (var index = 0; index < response.length; index++) {
+
     var station = response[index];
 
     // For each station, create a marker and bind a popup with the station's name
@@ -285,7 +300,36 @@ d3.json("https://data.ny.gov/resource/hvwh-qtfg.json", function(response) {
   }
 });
 
+// Airports
+d3.json("https://data.cityofnewyork.us/api/views/3q66-h7aj/rows.geojson?", function(response) {
+  // Loop through the stations array
+
+  for (var index = 0; index < response.features.length; index++) {
+
+  
+
+    var airport = response.features[index];
+
+    // For each station, create a marker and bind a popup with the station's name
+    try {
+      var airMarker = L.marker([airport.geometry.coordinates[1], airport.geometry.coordinates[0]],  {icon: icons["AIRPORT"]})
+        .bindPopup("<h3>" + airport.properties.name + "<h3>");
+    }
+    catch(err) {
+      console.log("Airport Error: " + airport.properties.name)
+    }
+    
+    // Add the new marker to the appropriate layer
+    airMarker.addTo(layers["AIRPORT"]);
+  }
+});
+
+
+
+
 // School Districts
+
+// https://infohub.nyced.org/reports-and-policies/citywide-information-and-data/graduation-results
 var disctrictGradRate = {
   "1": "60.0%", "2": "74.8%", "3": "77.3%", "4": "84.9%", "5": "67.6%",
   "6": "63.8%", "7": "58.4%", "8": "54.3%", "9": "68.1%", "10": "72.0%",
@@ -335,170 +379,20 @@ d3.json(link, function(data) {
           map.fitBounds(event.target.getBounds());
         }
       });
-      // Giving each feature a pop-up with information pertinent to it
-       d3.json("https://data.cityofnewyork.us/resource/hvnc-iy6e.json", function(info) {
-        for (var index = 0; index < info.length; index++) {
-          var district = info[index];
-          layer.bindPopup("<h2>School District: " + feature.properties.schoolDistrict + "</h2>"
-            + "<hr><h3>Average Graduation Rate: " + disctrictGradRate[feature.properties.schoolDistrict] 
-            + "<br>Attendance: " + district.ytd_attendance_avg_ + "%<br>"
-            + "Enrollment: " + district.ytd_enrollment_avg_ + "</h3>");
-        }
-      });
+	    // Giving each feature a pop-up with information pertinent to it
+		d3.json("https://data.cityofnewyork.us/resource/hvnc-iy6e.json", function(info) {
+			//var city_attendance_avg = info[34].ytd_attendance_avg_;
+			//console.log(city_attendance_avg);
+			layer.bindPopup("<h2>School District: " + feature.properties.schoolDistrict + "</h2>"
+				+ "<hr><h3>Average Graduation Rate: " + disctrictGradRate[feature.properties.schoolDistrict] 
+				+ "<br>Average Attendance: " + info[feature.properties.schoolDistrict-1].ytd_attendance_avg_ + "%"
+				+ "<br>Enrollment: " + info[feature.properties.schoolDistrict-1].ytd_enrollment_avg_ + "</h3>");
+
+		});
     }
 
   });
   schoolDistrictLayer.addTo(layers["SCHOOL_DISTRICT"]);
-  //layerControl.addOverlay(schoolDistrictLayer, 'School District')
-});
-
-// Elementary School Zones
-var link = "https://data.cityofnewyork.us/api/views/xehh-f7pi/rows.geojson";
-
-// Grabbing our GeoJSON data..
-d3.json(link, function(data) {
-  // Creating a geoJSON layer with the retrieved data
-  var esZoneLayer = L.geoJson(data, {
-    // Style each feature (in this case a neighborhood)
-    style: function(feature) {
-      return {
-        color: "white",
-        // Call the chooseColor function to decide which color to color our neighborhood (color based on borough)
-        fillColor: "green",
-        fillOpacity: 0.5,
-        weight: 1.5
-      };
-    },
-    // Called on each feature
-    onEachFeature: function(feature, layer) {
-      // Set mouse events to change map styling
-      layer.on({
-        // When a user's mouse touches a map feature, the mouseover event calls this function, that feature's opacity changes to 90% so that it stands out
-        mouseover: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.7
-          });
-        },
-        // When the cursor no longer hovers over a map feature - when the mouseout event occurs - the feature's opacity reverts back to 50%
-        mouseout: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.5
-          });
-        },
-        // When a feature (neighborhood) is clicked, it is enlarged to fit the screen
-        click: function(event) {
-          map.fitBounds(event.target.getBounds());
-        }
-      });
-      // Giving each feature a pop-up with information pertinent to it
-      layer.bindPopup("<h2>School Zone: " + feature.properties.dbn + "</h2>");
-
-    }
-
-  });
-  esZoneLayer.addTo(layers["ES_ZONE"]);
-  //layerControl.addOverlay(schoolDistrictLayer, 'School District')
-});
-
-// Middle School Zones
-var link = "https://data.cityofnewyork.us/api/views/jxpn-gg5q/rows.geojson";
-
-// Grabbing our GeoJSON data..
-d3.json(link, function(data) {
-  // Creating a geoJSON layer with the retrieved data
-  var msZoneLayer = L.geoJson(data, {
-    // Style each feature (in this case a neighborhood)
-    style: function(feature) {
-      return {
-        color: "white",
-        // Call the chooseColor function to decide which color to color our neighborhood (color based on borough)
-        fillColor: "orange",
-        fillOpacity: 0.5,
-        weight: 1.5
-      };
-    },
-    // Called on each feature
-    onEachFeature: function(feature, layer) {
-      // Set mouse events to change map styling
-      layer.on({
-        // When a user's mouse touches a map feature, the mouseover event calls this function, that feature's opacity changes to 90% so that it stands out
-        mouseover: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.7
-          });
-        },
-        // When the cursor no longer hovers over a map feature - when the mouseout event occurs - the feature's opacity reverts back to 50%
-        mouseout: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.5
-          });
-        },
-        // When a feature (neighborhood) is clicked, it is enlarged to fit the screen
-        click: function(event) {
-          map.fitBounds(event.target.getBounds());
-        }
-      });
-      // Giving each feature a pop-up with information pertinent to it
-      layer.bindPopup("<h2>Middle School Zone: " + feature.properties.dbn + "</h2>");
-
-    }
-
-  });
-  msZoneLayer.addTo(layers["MS_ZONE"]);
-  //layerControl.addOverlay(schoolDistrictLayer, 'School District')
-});
-
-// High School Zones
-var link = "https://data.cityofnewyork.us/api/views/9hw3-gi34/rows.geojson?";
-
-// Grabbing our GeoJSON data..
-d3.json(link, function(data) {
-  // Creating a geoJSON layer with the retrieved data
-  var hsZoneLayer = L.geoJson(data, {
-    // Style each feature (in this case a neighborhood)
-    style: function(feature) {
-      return {
-        color: "white",
-        // Call the chooseColor function to decide which color to color our neighborhood (color based on borough)
-        fillColor: "orange",
-        fillOpacity: 0.5,
-        weight: 1.5
-      };
-    },
-    // Called on each feature
-    onEachFeature: function(feature, layer) {
-      // Set mouse events to change map styling
-      layer.on({
-        // When a user's mouse touches a map feature, the mouseover event calls this function, that feature's opacity changes to 90% so that it stands out
-        mouseover: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.7
-          });
-        },
-        // When the cursor no longer hovers over a map feature - when the mouseout event occurs - the feature's opacity reverts back to 50%
-        mouseout: function(event) {
-          layer = event.target;
-          layer.setStyle({
-            fillOpacity: 0.5
-          });
-        },
-        // When a feature (neighborhood) is clicked, it is enlarged to fit the screen
-        click: function(event) {
-          map.fitBounds(event.target.getBounds());
-        }
-      });
-      // Giving each feature a pop-up with information pertinent to it
-      layer.bindPopup("<h2>High School Zone: " + feature.properties.dbn + "</h2>");
-
-    }
-
-  });
-  hsZoneLayer.addTo(layers["HS_ZONE"]);
   //layerControl.addOverlay(schoolDistrictLayer, 'School District')
 });
 
@@ -571,7 +465,7 @@ d3.json(link, function(data) {
         }
       });
       // Giving each feature a pop-up with information pertinent to it
-      layer.bindPopup("<h2>Borough: " + feature.properties.borough + "</h2>"
+      layer.bindPopup("<h2>" + feature.properties.borough + "</h2>"
         + "<hr><h3>Average Graduation Rate: " + boroughGradRate[feature.properties.borough] + "</h3>");
 
     }
@@ -687,12 +581,13 @@ var APILink = "http://data.beta.nyc//dataset/d6ffa9a4-c598-4b18-8caf-14abde6a575
 
 var geojson;
 var jsonData;
+var NYCCounties = ["Queens County", "New York County", "Richmond County", "Bronx County", "Kings County"];
 
 // Grab data with d3
 d3.json(APILink, function(data) {
 
   jsonData = data;
-  console.log(L.choropleth);
+  
   // Create a new choropleth layer
   geojson = L.choropleth(data, {
 
@@ -718,8 +613,11 @@ d3.json(APILink, function(data) {
     onEachFeature: function(feature, layer) {
       layer.bindPopup(feature.properties.LOCALNAME + ", " + feature.properties.State + "<br>Yearly Housing:<br>" +
         "$" + feature.properties.HOUSINGCOS);
-    }
-    
+    },
+
+  
+    filter: function(feature) {if (NYCCounties.indexOf(feature.properties.COUNTY) >=0 && feature.properties.HOUSINGCOS != 0) {return true;} else {return false;}}
+
   });
 
   // Set up the legend
@@ -821,8 +719,11 @@ d3.json(APILink, function(data) {
         layer.bindPopup(feature.properties.LOCALNAME + ", " + feature.properties.State + "<br>Yearly Rent:<br>" +
           "$" + feature.properties.HOUSINGCOS);
       },
-  
-      filter: function(feature) {if (feature.properties.HOUSINGCOS > filterLevel) {return false;} else {return true;}}
+
+      filter: function(feature) {if (NYCCounties.indexOf(feature.properties.COUNTY) >=0 && feature.properties.HOUSINGCOS < filterLevel && feature.properties.HOUSINGCOS != 0) {return true;} else {return false;}}
+      //filter: function(feature) {if (feature.properties.HOUSINGCOS > filterLevel) {return false;} else {return true;}}
+
+      
   
     });
     geojson.addTo(layers["COST_LIVING"]);

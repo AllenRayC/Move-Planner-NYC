@@ -8,7 +8,7 @@ body {
 }
 
 .leaflet-popup-content {
-  text-align: center;
+  text-align: left;
 }
 
 #map-id {
@@ -55,6 +55,11 @@ body {
 h1 {
   text-align: center;
 }
+
+h1 {
+  text-align: left;
+}
+
 
 /*
 #content {
