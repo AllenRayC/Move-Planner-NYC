@@ -6,7 +6,10 @@ import numpy as np
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
+
+import pandas as pd
+import datetime as dt
 
 from flask import Flask, jsonify, render_template
 
@@ -18,13 +21,11 @@ app = Flask(__name__)
 #################################################
 # Database Setup
 #################################################
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:raynor1128@localhost/move_nyc'
-#db = SQLAlchemy(app)
 
 # reflect an existing database into a new model
 Base = automap_base()
 
-engine = create_engine("mysql://root:raynor1128@localhost/move_nyc")
+engine = create_engine("mysql://allen:raynor1128@localhost/move_nyc")
 
 # reflect the tables
 Base.prepare(engine, reflect=True)
@@ -33,13 +34,19 @@ Base.prepare(engine, reflect=True)
 
 High_Schools = Base.classes.high_schools
 #app.config['MYSQL_DATABASE_DB'] = 'high_schools'
+My_user_settings = Base.classes.user_settings
 
 session = Session(engine)
 
 @app.route("/")
 def index():
     """Return the homepage."""
-    return render_template("index.html")
+    session = Session(engine)
+    settings_info = session.query(My_user_settings.field_name, My_user_settings.field_value) \
+        .filter(My_user_settings.user_name == 'default').all()
+    saved_settings = jsonify(list(np.ravel(settings_info)))
+    
+    return render_template("index.html", user_settings=saved_settings)
 
 
 @app.route("/highschool")

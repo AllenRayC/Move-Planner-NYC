@@ -21,3 +21,19 @@ CREATE TABLE high_schools (
 );
 
 select * from high_schools;
+
+CREATE TABLE user_settings (
+	ID int NOT NULL AUTO_INCREMENT,
+    user_name VARCHAR(50),
+    field_name VARCHAR(50),
+    field_value VARCHAR(50),
+    PRIMARY KEY (ID)
+);
+
+
+INSERT INTO user_settings (user_name, field_name, field_value)
+	VALUES('default', 'monthly_rent', '2500'),
+			('default', 'overall_budget', '10000');
+
+SELECT * FROM user_settings;
+
