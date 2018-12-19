@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 import numpy as np
+import itertools
 
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
@@ -44,9 +45,25 @@ def index():
     session = Session(engine)
     settings_info = session.query(My_user_settings.field_name, My_user_settings.field_value) \
         .filter(My_user_settings.user_name == 'default').all()
-    saved_settings = jsonify(list(np.ravel(settings_info)))
-    
+
+    #convert the results to a dictionary of field/value pairs
+    d = dict(itertools.zip_longest(*[iter(list(np.ravel(settings_info)))] * 2, fillvalue=""))
+    saved_settings = jsonify(d)
+
     return render_template("index.html", user_settings=saved_settings)
+
+@app.route("/user_settings")
+def user_settings():
+    """Return the homepage."""
+    session = Session(engine)
+    settings_info = session.query(My_user_settings.field_name, My_user_settings.field_value) \
+        .filter(My_user_settings.user_name == 'default').all()
+
+    #convert the results to a dictionary of field/value pairs
+    d = dict(itertools.zip_longest(*[iter(list(np.ravel(settings_info)))] * 2, fillvalue=""))
+    saved_settings = jsonify(d)
+    return saved_settings
+
 
 
 @app.route("/highschool")
