@@ -1,4 +1,3 @@
-
 DROP DATABASE IF EXISTS move_nyc;
 CREATE DATABASE move_nyc;
 USE move_nyc;

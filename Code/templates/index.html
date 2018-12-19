@@ -7,6 +7,9 @@
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css?family=Sanchez" rel="stylesheet">
 
+  <!-- dataframe-js -->
+  <script src="../static/js/dataframe.js"></script>
+
   <!-- Leaflet CSS & JS-->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
   integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
@@ -27,7 +30,9 @@
 
   <!-- Icons -->
   <link rel="stylesheet" type="text/css" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <link href="https://unpkg.com/ionicons@4.5.0/dist/css/ionicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../static/css/leaflet.extra-markers.min.css">
+  <script src="https://unpkg.com/ionicons@4.5.0/dist/ionicons.js"></script>
 
   <!-- Our CSS -->
   <link rel="stylesheet" type="text/css" href="../static/css/style.css">
@@ -40,7 +45,7 @@
   <section>
     <div class= "container">
       <div class = "row">
-        <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2">
+        <div class="col-xs-8 col-sm-8">
           <form>
             <div class="form-group">
               <label for="maxRent">Target Monthly Rent</label>
@@ -49,15 +54,18 @@
             </div>
           </form>
         </div>
+        <div class="col-xs-4 col-sm-4">
+        </div>
         <!-- The div where we will inject our map -->
         <!-- <div class="col-xs-12 col-sm-12 col-md-10 col-lg-10">
           <div class="container" style= "height:600px; width:600px;">
           </div>
         </div> -->
+        </div>
 <div class="container-fluid">
   <div id="map-id" style="height: 880px;"></div>
 </div>
-       </div>
+       
     </div>
 </section>
 
